@@ -3,6 +3,7 @@ const cors = require("cors");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const db = require("./database");
+require("dotenv").config();
 
 const app = express();
 app.use(cors());
@@ -10,7 +11,7 @@ app.use(cors());
 const PORT = 5000;
 app.use(express.json());
 
-const JWT_SECRET = "my-super-secret-key";
+const JWT_SECRET = process.env.JWT_SECRET;
 
 function authenticateToken(req, res, next) {
   const authHeader = req.headers.authorization;
