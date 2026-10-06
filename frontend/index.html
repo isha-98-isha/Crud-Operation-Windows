@@ -1,0 +1,274 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Users App</title>
+  </head>
+
+  <body>
+    <h1>Users</h1>
+
+    <button id="loadUsers">Load Users</button>
+
+    <div id="users"></div>
+
+    <hr />
+
+    <h2>Add User</h2>
+
+    <input id="name" type="text" placeholder="Name" />
+
+    <input id="role" type="text" placeholder="Role" />
+
+    <button id="addUser">Add User</button>
+
+    <p id="message"></p>
+
+    <script>
+      const button = document.getElementById("loadUsers");
+      const addButton = document.getElementById("addUser");
+
+      const usersContainer = document.getElementById("users");
+      const message = document.getElementById("message");
+
+      button.addEventListener("click", loadUsers);
+
+      //Post-------------------------------------------------------------------------------------------------------------------------------//
+
+      addButton.addEventListener("click", async () => {
+        const name = document.getElementById("name").value;
+        const role = document.getElementById("role").value;
+
+        try {
+          const response = await fetch("http://localhost:5000/api/users", {
+            method: "POST",
+
+            headers: {
+              "Content-Type": "application/json",
+            },
+
+            body: JSON.stringify({
+              name: name,
+              role: role,
+            }),
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            message.textContent = data.message;
+            return;
+          }
+
+          message.textContent = "Saving...";
+          addButton.disabled = true;
+
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+
+          message.textContent = `User ${data.name} created successfully!`;
+
+          loadUsers();
+        } catch (error) {
+          message.textContent = "Unable to connect to the server.";
+
+          console.error(error);
+        } finally {
+          addButton.disabled = false;
+        }
+      });
+
+      //-------------------------------------------------------------------------------------------------------------------------------//
+
+      async function loadUsers() {
+        try {
+          const response = await fetch("http://localhost:5000/api/users");
+
+          if (!response.ok) {
+            throw new Error("Failed to load users");
+          }
+
+          const users = await response.json();
+
+          usersContainer.innerHTML = "";
+
+          users.forEach((user) => {
+            const userElement = document.createElement("div");
+
+            userElement.textContent = `${user.id}. ${user.name} - ${user.role} `;
+
+            //Edit------------------------------------------------------------//
+
+            const editButton = document.createElement("button");
+
+            editButton.textContent = "Edit";
+
+            editButton.addEventListener("click", () => {
+              editUser(user);
+            });
+
+            userElement.appendChild(editButton);
+
+            //Delete------------------------------------------------------------//
+            const deleteButton = document.createElement("button");
+
+            deleteButton.textContent = "Delete";
+
+            deleteButton.addEventListener("click", () => {
+              const confirmed = confirm(
+                `Are you sure you want to delete ${user.name}?`,
+              );
+
+              if (!confirmed) {
+                return;
+              }
+
+              deleteUser(user.id);
+            });
+            //Patch------------------------------------------------------------//
+            userElement.appendChild(deleteButton);
+            const patchButton = document.createElement("button");
+
+            patchButton.textContent = "Change Role";
+
+            patchButton.addEventListener("click", () => {
+              patchUser(user);
+            });
+
+            userElement.appendChild(patchButton);
+
+            usersContainer.appendChild(userElement);
+          });
+        } catch (error) {
+          usersContainer.textContent = "Unable to connect to the server.";
+
+          console.error(error);
+        }
+      }
+
+      //-------------------------------------------------------------------------------------------------------------------------------//
+
+      async function deleteUser(id) {
+        try {
+          const response = await fetch(
+            `http://localhost:5000/api/users/${id}`,
+            {
+              method: "DELETE",
+            },
+          );
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            message.textContent = data.message;
+            return;
+          }
+
+          message.textContent = data.message;
+
+          loadUsers();
+        } catch (error) {
+          message.textContent = "Unable to connect to the server.";
+
+          console.error(error);
+        }
+      }
+      //-------------------------------------------------------------------------------------------------------------------------------//
+
+      function editUser(user) {
+        const newName = prompt("Enter name:", user.name);
+
+        if (newName === null) {
+          return;
+        }
+
+        const newRole = prompt("Enter role:", user.role);
+
+        if (newRole === null) {
+          return;
+        }
+
+        updateUser(user.id, newName, newRole);
+      }
+
+      //-------------------------------------------------------------------------------------------------------------------------------//
+      async function updateUser(id, name, role) {
+        try {
+          const response = await fetch(
+            `http://localhost:5000/api/users/${id}`,
+            {
+              method: "PUT",
+
+              headers: {
+                "Content-Type": "application/json",
+              },
+
+              body: JSON.stringify({
+                name: name,
+                role: role,
+                title: "Updated Task",
+                completed: false,
+              }),
+            },
+          );
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            message.textContent = data.message;
+            return;
+          }
+
+          message.textContent = "User updated successfully!";
+
+          loadUsers();
+        } catch (error) {
+          message.textContent = "Unable to connect to the server.";
+
+          console.error(error);
+        }
+      }
+
+      function patchUser(user) {
+        const newRole = prompt("Enter new role:", user.role);
+
+        if (newRole === null) {
+          return;
+        }
+
+        patchUserRole(user.id, newRole);
+      }
+      async function patchUserRole(id, role) {
+        try {
+          const response = await fetch(
+            `http://localhost:5000/api/users/${id}`,
+            {
+              method: "PATCH",
+
+              headers: {
+                "Content-Type": "application/json",
+              },
+
+              body: JSON.stringify({
+                role: role,
+              }),
+            },
+          );
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            message.textContent = data.message;
+            return;
+          }
+
+          message.textContent = "User role updated successfully!";
+
+          loadUsers();
+        } catch (error) {
+          message.textContent = "Unable to connect to the server.";
+
+          console.error(error);
+        }
+      }
+    </script>
+  </body>
+</html>
