@@ -378,7 +378,7 @@ app.post("/api/users", (req, res) => {
 app.delete(
   "/api/users/:id",
   authenticateToken,
-  requireRole("Frontend Developer"),
+  requireRole("User"),
   (req, res) => {
     const id = Number(req.params.id);
 

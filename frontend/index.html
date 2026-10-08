@@ -80,7 +80,16 @@
 
       async function loadUsers() {
         try {
-          const response = await fetch("http://localhost:5000/api/users");
+          // 1. Get the token you saved in your browser console
+          const token = localStorage.getItem("token");
+
+          // 2. Pass the token inside the Authorization Header
+          const response = await fetch("http://localhost:5000/api/users", {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
 
           if (!response.ok) {
             throw new Error("Failed to load users");
@@ -92,54 +101,40 @@
 
           users.forEach((user) => {
             const userElement = document.createElement("div");
-
             userElement.textContent = `${user.id}. ${user.name} - ${user.role} `;
 
             //Edit------------------------------------------------------------//
-
             const editButton = document.createElement("button");
-
             editButton.textContent = "Edit";
-
             editButton.addEventListener("click", () => {
               editUser(user);
             });
-
             userElement.appendChild(editButton);
 
             //Delete------------------------------------------------------------//
             const deleteButton = document.createElement("button");
-
             deleteButton.textContent = "Delete";
-
             deleteButton.addEventListener("click", () => {
               const confirmed = confirm(
                 `Are you sure you want to delete ${user.name}?`,
               );
-
-              if (!confirmed) {
-                return;
-              }
-
+              if (!confirmed) return;
               deleteUser(user.id);
             });
-            //Patch------------------------------------------------------------//
             userElement.appendChild(deleteButton);
+
+            //Patch------------------------------------------------------------//
             const patchButton = document.createElement("button");
-
             patchButton.textContent = "Change Role";
-
             patchButton.addEventListener("click", () => {
               patchUser(user);
             });
-
             userElement.appendChild(patchButton);
 
             usersContainer.appendChild(userElement);
           });
         } catch (error) {
           usersContainer.textContent = "Unable to connect to the server.";
-
           console.error(error);
         }
       }
